@@ -1098,75 +1098,124 @@
       let aiController = null;
 
       async function triggerAI() {
-        const files = document.getElementById('photoInput').files;
-        if (!files.length) {
-          showToast('請先上傳照片再使用 AI 辨識', 'error');
-          return;
-        }
+  const files = document.getElementById('photoInput').files;
+  if (!files.length) { showToast('請先上傳照片再使用 AI 辨識', 'error'); return; }
 
-        const loading = document.getElementById('aiLoading');
-        const result = document.getElementById('aiResult');
-        result.classList.remove('show');
-        loading.classList.add('show');
-        setMethod('AI');
+  const loading = document.getElementById('aiLoading');
+  const result  = document.getElementById('aiResult');
+  result.classList.remove('show');
+  loading.classList.add('show');
+  loading.innerHTML = '<div class="spinner"></div> <span id="aiCountdown">AI 辨識中，剩餘 15 秒...</span>';
+  setMethod('AI');
 
-        aiController = new AbortController();
-        const timeout = setTimeout(() => {
-          aiController.abort();
-          loading.classList.remove('show');
-          result.textContent = '⚠️ AI 辨識逾時（15秒），請手動輸入鳥類名稱';
-          result.classList.add('show');
-          setMethod('手動');
-        }, 15000);
+  // 倒數計時顯示
+  let remaining = 15;
+  const countdownEl = () => document.getElementById('aiCountdown');
+  const countdownTimer = setInterval(() => {
+    remaining--;
+    if (countdownEl()) countdownEl().textContent = `AI 辨識中，剩餘 ${remaining} 秒...`;
+  }, 1000);
 
-        try {
-          const b64 = await toBase64(files[0]);
-          const mime = files[0].type || 'image/jpeg';
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      { inline_data: { mime_type: mime, data: b64 } },
-                      {
-                        text: '請辨識這張照片中的鳥類，只回答鳥類中文名稱，若無法辨識請回答「無法辨識」。',
-                      },
-                    ],
-                  },
-                ],
-              }),
-              signal: aiController.signal,
-            }
-          );
-          clearTimeout(timeout);
-          loading.classList.remove('show');
-          const data = await res.json();
-          const text =
-            data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-            '無法辨識';
-          if (text === '無法辨識') {
-            result.textContent = '🤖 AI 無法辨識，請手動輸入';
-            setMethod('手動');
-          } else {
-            document.getElementById('birdSpecies').value = text;
-            result.textContent = `🤖 AI 辨識結果：${text}`;
-          }
-          result.classList.add('show');
-        } catch (err) {
-          clearTimeout(timeout);
-          loading.classList.remove('show');
-          if (err.name !== 'AbortError') {
-            document.getElementById('aiResult').textContent =
-              '⚠️ AI 辨識失敗，請手動輸入';
-            document.getElementById('aiResult').classList.add('show');
-            setMethod('手動');
-          }
-        }
+  aiController = new AbortController();
+  let isTimeout = false;
+
+  const timeout = setTimeout(() => {
+    isTimeout = true;
+    aiController.abort();
+    clearInterval(countdownTimer);
+    loading.classList.remove('show');
+    result.innerHTML = `
+      ⚠️ <strong>AI 辨識逾時（超過15秒）</strong><br/>
+      <small style="color:#888">可能原因：圖片檔案太大、網路速度較慢、或 Gemini 伺服器繁忙。<br/>
+      建議：壓縮照片後再試，或直接手動輸入鳥類名稱。</small>`;
+    result.style.color = '#e67e22';
+    result.classList.add('show');
+    setMethod('手動');
+  }, 15000);
+
+  try {
+    const file = files[0];
+
+    // 檢查檔案大小
+    if (file.size > 10 * 1024 * 1024) {
+      clearTimeout(timeout);
+      clearInterval(countdownTimer);
+      loading.classList.remove('show');
+      result.innerHTML = `⚠️ <strong>照片檔案過大（超過10MB）</strong><br/><small style="color:#888">請壓縮照片後再試，建議檔案小於5MB。</small>`;
+      result.style.color = '#e67e22';
+      result.classList.add('show');
+      setMethod('手動');
+      return;
+    }
+
+    const b64 = await toBase64(file);
+    const mime = file.type || 'image/jpeg';
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [
+          { inline_data: { mime_type: mime, data: b64 } },
+          { text: '請辨識這張照片中的鳥類，只回答鳥類中文名稱，若無法辨識請回答「無法辨識」。' }
+        ]}]}),
+        signal: aiController.signal
       }
+    );
+
+    clearTimeout(timeout);
+    clearInterval(countdownTimer);
+    loading.classList.remove('show');
+
+    // HTTP 錯誤處理
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const errMsg = errData?.error?.message || `HTTP ${res.status}`;
+      result.innerHTML = `
+        ❌ <strong>AI 辨識失敗</strong><br/>
+        <small style="color:#888">錯誤原因：${errMsg}<br/>
+        ${res.status === 400 ? '請確認 Gemini API Key 是否正確填入。' : ''}
+        ${res.status === 403 ? 'API Key 可能無效或未啟用 Gemini API。' : ''}
+        ${res.status === 429 ? '已超過免費使用額度，請稍後再試。' : ''}
+        </small>`;
+      result.style.color = 'var(--danger)';
+      result.classList.add('show');
+      setMethod('手動');
+      return;
+    }
+
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '無法辨識';
+
+    if (text === '無法辨識') {
+      result.innerHTML = `🤖 <strong>AI 無法從照片辨識鳥類</strong><br/><small style="color:#888">可能照片角度不清楚或非鳥類特寫，請手動輸入鳥類名稱。</small>`;
+      result.style.color = '#888';
+      result.classList.add('show');
+      setMethod('手動');
+    } else {
+      document.getElementById('birdSpecies').value = text;
+      result.innerHTML = `✅ <strong>AI 辨識成功：${text}</strong><br/><small style="color:#888">若辨識結果有誤，可直接修改下方欄位。</small>`;
+      result.style.color = 'var(--leaf)';
+      result.classList.add('show');
+    }
+
+  } catch (err) {
+    clearTimeout(timeout);
+    clearInterval(countdownTimer);
+    loading.classList.remove('show');
+
+    if (err.name === 'AbortError' && isTimeout) return; // 逾時已處理
+
+    result.innerHTML = `
+      ❌ <strong>AI 辨識發生錯誤</strong><br/>
+      <small style="color:#888">錯誤訊息：${err.message}<br/>
+      請確認網路連線正常，或直接手動輸入鳥類名稱。</small>`;
+    result.style.color = 'var(--danger)';
+    result.classList.add('show');
+    setMethod('手動');
+  }
+}
 
       function switchManual() {
         setMethod('手動');
