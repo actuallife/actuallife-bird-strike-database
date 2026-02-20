@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>城市飛羽 · 鳥窗殺防治資料庫</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --sky: #e8f4f8;
+        --dusk: #2c4a6e;
+        --dawn: #f0a05a;
+        --leaf: #3d7a5e;
+        --mist: #8ab4c4;
+        --night: #1a2d3f;
+        --paper: #faf7f2;
+        --ink: #2a2a2a;
+        --danger: #c0392b;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: 'Noto Sans TC', sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+        overflow-x: hidden;
+      }
+
+      /* NAV */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2.5rem;
+        background: rgba(250, 247, 242, 0.93);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(44, 74, 110, 0.1);
+      }
+      .nav-brand {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--dusk);
+      }
+      .nav-brand span {
+        color: var(--dawn);
+      }
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+      }
+      .nav-links a {
+        text-decoration: none;
+        color: var(--dusk);
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+      .nav-links a:hover {
+        color: var(--dawn);
+      }
+
+      /* HERO */
+      .hero {
+        min-height: 100vh;
+        background: linear-gradient(
+          160deg,
+          var(--night) 0%,
+          var(--dusk) 55%,
+          #3a6b8a 100%
+        );
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 6rem 2rem 4rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+            ellipse at 20% 50%,
+            rgba(240, 160, 90, 0.12) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse at 80% 20%,
+            rgba(61, 122, 94, 0.15) 0%,
+            transparent 50%
+          );
+      }
+      .hero-bird {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 0 30px rgba(240, 160, 90, 0.4));
+        position: relative;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(-3deg);
+        }
+        50% {
+          transform: translateY(-18px) rotate(3deg);
+        }
+      }
+      .hero h1 {
+        font-family: 'Noto Serif TC', serif;
+        font-size: clamp(2.2rem, 6vw, 4rem);
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.35;
+        margin-bottom: 1rem;
+        position: relative;
+      }
+      .hero h1 em {
+        color: var(--dawn);
+        font-style: normal;
+      }
+      .hero-sub {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        max-width: 540px;
+        line-height: 1.9;
+        margin-bottom: 2rem;
+        position: relative;
+      }
+      .hero-team {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 0.12em;
+        margin-bottom: 2.5rem;
+        position: relative;
+      }
+      .hero-cta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        position: relative;
+      }
+      .btn {
+        padding: 0.85rem 2rem;
+        border-radius: 50px;
+        font-size: 0.92rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.25s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Noto Sans TC', sans-serif;
+      }
+      .btn-primary {
+        background: var(--dawn);
+        color: var(--night);
+        box-shadow: 0 4px 20px rgba(240, 160, 90, 0.35);
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(240, 160, 90, 0.5);
+      }
+      .btn-outline {
+        background: transparent;
+        color: #fff;
+        border: 1.5px solid rgba(255, 255, 255, 0.4);
+      }
+      .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .scroll-hint {
+        position: absolute;
+        bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 0.72rem;
+      }
+      .scroll-arrow {
+        animation: bounce 2s infinite;
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(6px);
+        }
+      }
+
+      /* STATS */
+      .stats-bar {
+        background: var(--dusk);
+        padding: 2.5rem 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 4rem;
+        flex-wrap: wrap;
+      }
+      .stat-item {
+        text-align: center;
+      }
+      .stat-num {
+        font-family: 'Space Mono', monospace;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--dawn);
+        display: block;
+      }
+      .stat-label {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.55);
+        letter-spacing: 0.05em;
+      }
+
+      /* SECTIONS */
+      section {
+        padding: 5rem 2rem;
+      }
+      .section-wrap {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+      .section-tag {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        color: var(--mist);
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+      }
+      .section-title {
+        font-family: 'Noto Serif TC', serif;
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        font-weight: 700;
+        color: var(--dusk);
+        margin-bottom: 1.5rem;
+        line-height: 1.4;
+      }
+      .section-desc {
+        font-size: 0.97rem;
+        color: #555;
+        line-height: 1.9;
+        max-width: 680px;
+      }
+
+      /* INFO CARDS */
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-top: 3rem;
+      }
+      .info-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid rgba(44, 74, 110, 0.08);
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .info-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      .info-card-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+      }
+      .info-card h3 {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 1.02rem;
+        color: var(--dusk);
+        margin-bottom: 0.75rem;
+      }
+      .info-card p {
+        font-size: 0.87rem;
+        color: #666;
+        line-height: 1.8;
+      }
+
+      /* FORM */
+      #report {
+        background: linear-gradient(135deg, #f0f6fa 0%, var(--paper) 100%);
+      }
+      .form-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 3rem;
+        margin-top: 3rem;
+        box-shadow: 0 4px 40px rgba(44, 74, 110, 0.1);
+        border: 1px solid rgba(44, 74, 110, 0.08);
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .form-group.full {
+        grid-column: 1 / -1;
+      }
+      label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--dusk);
+        letter-spacing: 0.02em;
+      }
+      label .req {
+        color: var(--danger);
+      }
+      input,
+      select,
+      textarea {
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1.5px solid #dde5ec;
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 0.9rem;
+        color: var(--ink);
+        background: #fafcfe;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        outline: none;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--mist);
+        box-shadow: 0 0 0 3px rgba(138, 180, 196, 0.2);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      /* PHOTO UPLOAD */
+      .photo-upload {
+        border: 2px dashed #ccd8e3;
+        border-radius: 12px;
+        padding: 2.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #f7fafc;
+        position: relative;
+      }
+      .photo-upload:hover {
+        border-color: var(--mist);
+        background: #eef5f9;
+      }
+      .photo-upload input[type='file'] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .photo-upload-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .photo-upload p {
+        font-size: 0.87rem;
+        color: #888;
+      }
+      .photo-upload strong {
+        color: var(--dusk);
+      }
+      #preview-container {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.75rem;
+      }
+      #preview-container img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #dde5ec;
+      }
+
+      /* GPS */
+      .gps-row {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+      }
+      .gps-row input {
+        flex: 1;
+      }
+      .btn-sm {
+        padding: 0.75rem 1.2rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.84rem;
+        white-space: nowrap;
+        transition: background 0.2s;
+        font-family: 'Noto Sans TC', sans-serif;
+        color: #fff;
+      }
+      .btn-green {
+        background: var(--leaf);
+      }
+      .btn-green:hover {
+        background: #2d5f48;
+      }
+      .btn-blue {
+        background: var(--mist);
+      }
+      .btn-blue:hover {
+        background: #6a9ab0;
+      }
+      .btn-gray {
+        background: #aaa;
+      }
+      .btn-gray:hover {
+        background: #888;
+      }
+
+      /* AI */
+      .ai-row {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
+      .method-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .ai-loading {
+        display: none;
+        align-items: center;
+        gap: 0.6rem;
+        color: var(--mist);
+        font-size: 0.85rem;
+        margin-top: 0.4rem;
+      }
+      .ai-loading.show {
+        display: flex;
+      }
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--mist);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .ai-result {
+        background: linear-gradient(135deg, #eaf5ee, #e8f4f8);
+        border: 1px solid #b8dcc8;
+        border-radius: 10px;
+        padding: 0.85rem 1.1rem;
+        font-size: 0.87rem;
+        color: var(--leaf);
+        display: none;
+        margin-top: 0.4rem;
+      }
+      .ai-result.show {
+        display: block;
+      }
+
+      /* SUBMIT */
+      .form-submit {
+        margin-top: 2rem;
+        text-align: center;
+      }
+      .btn-submit {
+        padding: 1rem 3rem;
+        background: var(--dusk);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s;
+        font-family: 'Noto Sans TC', sans-serif;
+        box-shadow: 0 4px 20px rgba(44, 74, 110, 0.25);
+      }
+      .btn-submit:hover {
+        background: var(--night);
+        transform: translateY(-2px);
+      }
+      .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* TABLE */
+      #data {
+        background: var(--paper);
+      }
+      .data-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+        margin-top: 2rem;
+      }
+      .data-controls input {
+        flex: 1;
+        min-width: 200px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 16px;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(44, 74, 110, 0.08);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      thead {
+        background: var(--dusk);
+      }
+      thead th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.85);
+        letter-spacing: 0.04em;
+      }
+      tbody tr {
+        border-bottom: 1px solid #eaecef;
+        transition: background 0.15s;
+      }
+      tbody tr:hover {
+        background: #f5f9fc;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      td {
+        padding: 0.9rem 1.25rem;
+        font-size: 0.87rem;
+        color: var(--ink);
+        vertical-align: middle;
+      }
+      .tag {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.73rem;
+        background: #e8f4f8;
+        color: var(--dusk);
+      }
+      .tag.ai {
+        background: #eaf5ee;
+        color: var(--leaf);
+      }
+
+      /* MAP */
+      .map-placeholder {
+        background: linear-gradient(135deg, #daeaf5, #c5dce7);
+        border-radius: 16px;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1rem;
+        color: var(--dusk);
+        margin-top: 2rem;
+        border: 1px dashed var(--mist);
+      }
+
+      /* TOAST */
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 200;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s;
+        max-width: 320px;
+      }
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .toast.success {
+        background: var(--leaf);
+        color: #fff;
+      }
+      .toast.error {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      /* FOOTER */
+      footer {
+        background: var(--night);
+        color: rgba(255, 255, 255, 0.6);
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+      .footer-brand {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 1.15rem;
+        color: #fff;
+        margin-bottom: 0.75rem;
+      }
+      footer p {
+        font-size: 0.82rem;
+        line-height: 1.8;
+      }
+      .footer-team {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        color: var(--dawn);
+        margin-top: 1.5rem;
+        letter-spacing: 0.1em;
+      }
+
+      @media (max-width: 640px) {
+        nav {
+          padding: 1rem;
+        }
+        .nav-links {
+          display: none;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .form-card {
+          padding: 1.5rem;
+        }
+        .gps-row {
+          flex-direction: column;
+        }
+        .stats-bar {
+          gap: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-brand">城市飛羽 <span>·</span> 鳥窗殺防治</div>
+      <ul class="nav-links">
+        <li><a href="#about">關於窗殺</a></li>
+        <li><a href="#report">通報事件</a></li>
+        <li><a href="#data">資料庫</a></li>
+        <li><a href="#map">地圖</a></li>
+      </ul>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-bird">🦅</div>
+      <h1>每一扇窗<br />都可能是<em>最後的飛翔</em></h1>
+      <p class="hero-sub">
+        鳥類撞玻璃是城市中被嚴重忽視的生態威脅。透過系統性的資料收集，我們攜手守護每一隻天空的生命。
+      </p>
+      <div class="hero-team">荒野宜蘭親子團一團 — 城市飛羽</div>
+      <div class="hero-cta">
+        <a href="#report" class="btn btn-primary">📸 通報窗殺事件</a>
+        <a href="#data" class="btn btn-outline">📊 查看資料庫</a>
+      </div>
+      <div class="scroll-hint">
+        <span>向下探索</span>
+        <span class="scroll-arrow">↓</span>
+      </div>
+    </section>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-total">—</span
+        ><span class="stat-label">累計通報件數</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-species">—</span
+        ><span class="stat-label">記錄鳥種數</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-locations">—</span
+        ><span class="stat-label">事發地點數</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">10億+</span
+        ><span class="stat-label">全球年估計死亡（隻）</span>
+      </div>
+    </div>
+
+    <section id="about">
+      <div class="section-wrap">
+        <p class="section-tag">了解問題</p>
+        <h2 class="section-title">什麼是鳥窗殺？</h2>
+        <p class="section-desc">
+          鳥窗殺（Bird-Window
+          Strike）是指鳥類飛行時撞擊建築物玻璃窗而受傷或死亡的現象。玻璃反射天空與植物，讓鳥類誤以為是可以飛越的空間，全球每年估計有10億至40億隻鳥因此喪命，是僅次於棲地破壞的第二大人為致鳥死因。
+        </p>
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-icon">🏙️</div>
+            <h3>城市是高風險區域</h3>
+            <p>
+              高度透明或反光的建築玻璃，在鳥類遷徙季節格外危險，尤其清晨與黃昏光線低角度時。
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon">🦜</div>
+            <h3>遷徙鳥最受威脅</h3>
+            <p>
+              台灣位於東亞候鳥遷徙路線上，春秋兩季為高峰期。疲憊的候鳥判斷力下降，撞窗風險倍增。
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon">🔍</div>
+            <h3>資料嚴重不足</h3>
+            <p>
+              台灣缺乏系統性的鳥窗殺調查資料，公民科學是填補知識空白、推動政策改變的重要力量。
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon">🛡️</div>
+            <h3>預防是可行的</h3>
+            <p>
+              在玻璃加貼防撞貼紙、使用烏卡鳥型玻璃、外加緩衝網，都可大幅降低鳥窗殺發生率。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="report">
+      <div class="section-wrap">
+        <p class="section-tag">公民科學通報</p>
+        <h2 class="section-title">通報鳥窗殺事件</h2>
+        <p class="section-desc">
+          發現鳥類撞窗事件？請填寫以下表單，您的紀錄將成為保護鳥類的重要資料。
+        </p>
+        <div class="form-card">
+          <form id="reportForm" novalidate>
+            <div class="form-group full" style="margin-bottom: 1.5rem">
+              <label>事件照片</label>
+              <div class="photo-upload" id="photoZone">
+                <input type="file" id="photoInput" accept="image/*" multiple />
+                <div class="photo-upload-icon">📷</div>
+                <p><strong>點擊上傳</strong>或拖曳照片至此</p>
+                <p style="margin-top: 0.3rem">支援 JPG、PNG、HEIC，可多張</p>
+              </div>
+              <div id="preview-container"></div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group full">
+                <label>事發位置 <span class="req">*</span></label>
+                <div class="gps-row">
+                  <input
+                    type="text"
+                    id="location"
+                    placeholder="地址或地點描述（如：宜蘭市○○路○號）"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn-sm btn-green"
+                    onclick="getGPS()"
+                  >
+                    📍 自動抓取 GPS
+                  </button>
+                </div>
+                <input type="hidden" id="lat" />
+                <input type="hidden" id="lng" />
+                <small
+                  id="gpsStatus"
+                  style="
+                    color: var(--mist);
+                    font-size: 0.78rem;
+                    margin-top: 0.3rem;
+                    display: block;
+                  "
+                ></small>
+              </div>
+
+              <div class="form-group">
+                <label>事件時間 <span class="req">*</span></label>
+                <input type="datetime-local" id="eventTime" required />
+              </div>
+
+              <div class="form-group">
+                <label>窗殺類型 <span class="req">*</span></label>
+                <select id="strikeType" required>
+                  <option value="">請選擇</option>
+                  <option>撞擊後死亡</option>
+                  <option>撞擊後昏迷</option>
+                  <option>撞擊後受傷飛離</option>
+                  <option>撞擊後恢復飛離</option>
+                  <option>僅發現羽毛／痕跡</option>
+                  <option>其他</option>
+                </select>
+              </div>
+
+              <div class="form-group full">
+                <label>鳥類名稱 <span class="req">*</span></label>
+                <div class="ai-row">
+                  <span
+                    class="method-badge"
+                    id="methodBadge"
+                    style="background: #eaf5ee; color: var(--leaf)"
+                    >🤖 AI辨識</span
+                  >
+                  <button
+                    type="button"
+                    class="btn-sm btn-blue"
+                    onclick="triggerAI()"
+                  >
+                    使用 AI 辨識
+                  </button>
+                  <span style="font-size: 0.8rem; color: #bbb">或</span>
+                  <button
+                    type="button"
+                    class="btn-sm btn-gray"
+                    onclick="switchManual()"
+                  >
+                    手動輸入
+                  </button>
+                </div>
+                <div class="ai-loading" id="aiLoading">
+                  <div class="spinner"></div>
+                  AI辨識中，請稍候（最多15秒）...
+                </div>
+                <div class="ai-result" id="aiResult"></div>
+                <input
+                  type="text"
+                  id="birdSpecies"
+                  placeholder="鳥類中文或英文名稱"
+                  required
+                  style="margin-top: 0.5rem"
+                />
+                <input type="hidden" id="identMethod" value="AI" />
+              </div>
+
+              <div class="form-group">
+                <label>建築物類型</label>
+                <select id="buildingType">
+                  <option value="">請選擇</option>
+                  <option>住宅</option>
+                  <option>辦公大樓</option>
+                  <option>學校</option>
+                  <option>商場</option>
+                  <option>公共建設</option>
+                  <option>其他</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>玻璃特性</label>
+                <select id="glassType">
+                  <option value="">請選擇</option>
+                  <option>透明玻璃</option>
+                  <option>反光玻璃</option>
+                  <option>磨砂玻璃</option>
+                  <option>有防撞貼紙</option>
+                  <option>不明</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>當時天氣</label>
+                <select id="weather">
+                  <option value="">請選擇</option>
+                  <option>晴天</option>
+                  <option>多雲</option>
+                  <option>陰天</option>
+                  <option>雨天</option>
+                  <option>霧</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>通報者（選填）</label>
+                <input type="text" id="reporter" placeholder="您的姓名或匿名" />
+              </div>
+
+              <div class="form-group full">
+                <label>其他備註</label>
+                <textarea
+                  id="notes"
+                  placeholder="其他觀察細節、現場狀況等..."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-submit">
+              <button type="submit" class="btn-submit" id="submitBtn">
+                🕊️ 提交通報
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="data">
+      <div class="section-wrap">
+        <p class="section-tag">開放資料</p>
+        <h2 class="section-title">通報資料庫</h2>
+        <p class="section-desc">
+          所有通報資料將在去除個人資訊後公開，供研究與教育使用。
+        </p>
+        <div class="data-controls">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="🔍 搜尋鳥種、地點..."
+            oninput="filterTable()"
+          />
+          <select
+            id="filterType"
+            onchange="filterTable()"
+            style="max-width: 180px"
+          >
+            <option value="">全部類型</option>
+            <option>撞擊後死亡</option>
+            <option>撞擊後昏迷</option>
+            <option>撞擊後受傷飛離</option>
+            <option>撞擊後恢復飛離</option>
+          </select>
+          <button class="btn-sm btn-green" onclick="loadRecords()">
+            🔄 重新載入
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>時間</th>
+                <th>鳥種</th>
+                <th>辨識方式</th>
+                <th>地點</th>
+                <th>類型</th>
+                <th>天氣</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr>
+                <td
+                  colspan="7"
+                  style="text-align: center; padding: 3rem; color: #bbb"
+                >
+                  載入中...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="map">
+      <div class="section-wrap">
+        <p class="section-tag">空間分佈</p>
+        <h2 class="section-title">事件地圖</h2>
+        <p class="section-desc">
+          整合各通報地點的地理資訊，找出鳥窗殺熱點，協助優先推動防治措施。
+        </p>
+        <div class="map-placeholder">
+          <span style="font-size: 2.5rem">🗺️</span>
+          <p style="text-align: center">
+            地圖整合中<br /><small>串接 Supabase 地理資料後即自動顯示</small>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-brand">城市飛羽 · 鳥窗殺防治資料庫</div>
+      <p>
+        這個平台由一群關心生態的公民共同建立<br />每一筆資料，都是守護生命的行動
+      </p>
+      <div class="footer-team">製作團隊：荒野宜蘭親子團一團 — 城市飛羽</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // ════════════════════════════════
+      //  ⚙️ 請填入你的金鑰
+      // ════════════════════════════════
+      const SUPABASE_URL = 'https://piqeztwpvxzcdccxtrrn.supabase.co';
+      const SUPABASE_KEY =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcWV6dHdwdnh6Y2RjY3h0cnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MzQ0MDUsImV4cCI6MjA4NzExMDQwNX0.ybvQlMeyhuWPd_YHjvBI6U9QrNCFGAs10k_AbLvG5BI';
+      const GEMINI_KEY = 'AIzaSyDkcAdEf_qAXK6sdhu5Muu-o7TG7DQ_3-Y';
+      // ════════════════════════════════
+
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // 預設時間為現在
+      document.getElementById('eventTime').value = new Date(
+        Date.now() - new Date().getTimezoneOffset() * 60000
+      )
+        .toISOString()
+        .slice(0, 16);
+
+      // ── GPS ──
+      function getGPS() {
+        const status = document.getElementById('gpsStatus');
+        if (!navigator.geolocation) {
+          status.textContent = '此裝置不支援GPS';
+          return;
+        }
+        status.textContent = '⏳ 定位中...';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            document.getElementById('lat').value = lat.toFixed(6);
+            document.getElementById('lng').value = lng.toFixed(6);
+            if (!document.getElementById('location').value)
+              document.getElementById('location').value = `${lat.toFixed(
+                5
+              )}, ${lng.toFixed(5)}`;
+            status.textContent = `✅ GPS 已取得：${lat.toFixed(
+              5
+            )}, ${lng.toFixed(5)}`;
+          },
+          (err) => {
+            status.textContent = '⚠️ 定位失敗：' + err.message;
+          }
+        );
+      }
+
+      // ── 照片預覽 ──
+      document.getElementById('photoInput').addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        const container = document.getElementById('preview-container');
+        container.innerHTML = '';
+        files.forEach((f) => {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f);
+          container.appendChild(img);
+        });
+      });
+
+      // ── AI 辨識 ──
+      let aiController = null;
+
+      async function triggerAI() {
+        const files = document.getElementById('photoInput').files;
+        if (!files.length) {
+          showToast('請先上傳照片再使用 AI 辨識', 'error');
+          return;
+        }
+
+        const loading = document.getElementById('aiLoading');
+        const result = document.getElementById('aiResult');
+        result.classList.remove('show');
+        loading.classList.add('show');
+        setMethod('AI');
+
+        aiController = new AbortController();
+        const timeout = setTimeout(() => {
+          aiController.abort();
+          loading.classList.remove('show');
+          result.textContent = '⚠️ AI 辨識逾時（15秒），請手動輸入鳥類名稱';
+          result.classList.add('show');
+          setMethod('手動');
+        }, 15000);
+
+        try {
+          const b64 = await toBase64(files[0]);
+          const mime = files[0].type || 'image/jpeg';
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { inline_data: { mime_type: mime, data: b64 } },
+                      {
+                        text: '請辨識這張照片中的鳥類，只回答鳥類中文名稱，若無法辨識請回答「無法辨識」。',
+                      },
+                    ],
+                  },
+                ],
+              }),
+              signal: aiController.signal,
+            }
+          );
+          clearTimeout(timeout);
+          loading.classList.remove('show');
+          const data = await res.json();
+          const text =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+            '無法辨識';
+          if (text === '無法辨識') {
+            result.textContent = '🤖 AI 無法辨識，請手動輸入';
+            setMethod('手動');
+          } else {
+            document.getElementById('birdSpecies').value = text;
+            result.textContent = `🤖 AI 辨識結果：${text}`;
+          }
+          result.classList.add('show');
+        } catch (err) {
+          clearTimeout(timeout);
+          loading.classList.remove('show');
+          if (err.name !== 'AbortError') {
+            document.getElementById('aiResult').textContent =
+              '⚠️ AI 辨識失敗，請手動輸入';
+            document.getElementById('aiResult').classList.add('show');
+            setMethod('手動');
+          }
+        }
+      }
+
+      function switchManual() {
+        setMethod('手動');
+        document.getElementById('aiResult').classList.remove('show');
+        document.getElementById('birdSpecies').focus();
+      }
+
+      function setMethod(mode) {
+        document.getElementById('identMethod').value = mode;
+        const b = document.getElementById('methodBadge');
+        if (mode === 'AI') {
+          b.textContent = '🤖 AI辨識';
+          b.style.background = '#eaf5ee';
+          b.style.color = 'var(--leaf)';
+        } else {
+          b.textContent = '✏️ 手動輸入';
+          b.style.background = '#f0eaff';
+          b.style.color = '#6b4fa0';
+        }
+      }
+
+      function toBase64(file) {
+        return new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result.split(',')[1]);
+          r.onerror = rej;
+          r.readAsDataURL(file);
+        });
+      }
+
+      // ── 提交表單 ──
+      document
+        .getElementById('reportForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = document.getElementById('submitBtn');
+          btn.disabled = true;
+          btn.textContent = '提交中...';
+
+          try {
+            // 上傳照片
+            const files = Array.from(
+              document.getElementById('photoInput').files
+            );
+            const photoUrls = [];
+            for (const file of files) {
+              const path = `strikes/${Date.now()}_${file.name.replace(
+                /\s/g,
+                '_'
+              )}`;
+              const { error } = await sb.storage
+                .from('bird-photos')
+                .upload(path, file);
+              if (!error) {
+                const { data } = sb.storage
+                  .from('bird-photos')
+                  .getPublicUrl(path);
+                photoUrls.push(data.publicUrl);
+              }
+            }
+
+            const { error } = await sb.from('bird_strikes').insert([
+              {
+                event_time: document.getElementById('eventTime').value,
+                location: document.getElementById('location').value,
+                latitude:
+                  parseFloat(document.getElementById('lat').value) || null,
+                longitude:
+                  parseFloat(document.getElementById('lng').value) || null,
+                strike_type: document.getElementById('strikeType').value,
+                bird_species: document.getElementById('birdSpecies').value,
+                ident_method: document.getElementById('identMethod').value,
+                building_type: document.getElementById('buildingType').value,
+                glass_type: document.getElementById('glassType').value,
+                weather: document.getElementById('weather').value,
+                reporter: document.getElementById('reporter').value,
+                notes: document.getElementById('notes').value,
+                photos: photoUrls,
+              },
+            ]);
+
+            if (error) throw error;
+            showToast('✅ 通報成功！感謝您的貢獻', 'success');
+            document.getElementById('reportForm').reset();
+            document.getElementById('preview-container').innerHTML = '';
+            document.getElementById('aiResult').classList.remove('show');
+            document.getElementById('eventTime').value = new Date(
+              Date.now() - new Date().getTimezoneOffset() * 60000
+            )
+              .toISOString()
+              .slice(0, 16);
+            loadRecords();
+            updateStats();
+          } catch (err) {
+            showToast('❌ 提交失敗：' + err.message, 'error');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '🕊️ 提交通報';
+          }
+        });
+
+      // ── 載入資料 ──
+      let allRecords = [];
+      async function loadRecords() {
+        const { data, error } = await sb
+          .from('bird_strikes')
+          .select('*')
+          .order('event_time', { ascending: false })
+          .limit(200);
+        if (!error && data) {
+          allRecords = data;
+          renderTable(data);
+        } else
+          document.getElementById('tableBody').innerHTML =
+            '<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:#bbb">尚無資料或無法連線至資料庫</td></tr>';
+      }
+
+      function renderTable(records) {
+        const body = document.getElementById('tableBody');
+        if (!records.length) {
+          body.innerHTML =
+            '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#bbb">無符合條件的資料</td></tr>';
+          return;
+        }
+        body.innerHTML = records
+          .map(
+            (r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${
+        r.event_time ? r.event_time.slice(0, 16).replace('T', ' ') : '—'
+      }</td>
+      <td><strong>${r.bird_species || '—'}</strong></td>
+      <td><span class="tag ${r.ident_method === 'AI' ? 'ai' : ''}">${
+              r.ident_method || '—'
+            }</span></td>
+      <td>${r.location || '—'}</td>
+      <td>${r.strike_type || '—'}</td>
+      <td>${r.weather || '—'}</td>
+    </tr>`
+          )
+          .join('');
+      }
+
+      function filterTable() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const t = document.getElementById('filterType').value;
+        renderTable(
+          allRecords.filter(
+            (r) =>
+              (!q ||
+                (r.bird_species || '').toLowerCase().includes(q) ||
+                (r.location || '').toLowerCase().includes(q)) &&
+              (!t || r.strike_type === t)
+          )
+        );
+      }
+
+      // ── 統計數字 ──
+      async function updateStats() {
+        const { count: total } = await sb
+          .from('bird_strikes')
+          .select('*', { count: 'exact', head: true });
+        const { data: sp } = await sb
+          .from('bird_strikes')
+          .select('bird_species')
+          .not('bird_species', 'is', null);
+        const { data: lc } = await sb
+          .from('bird_strikes')
+          .select('location')
+          .not('location', 'is', null);
+        animateNum('stat-total', total || 0);
+        animateNum(
+          'stat-species',
+          new Set((sp || []).map((r) => r.bird_species)).size
+        );
+        animateNum(
+          'stat-locations',
+          new Set((lc || []).map((r) => r.location)).size
+        );
+      }
+
+      function animateNum(id, target) {
+        const el = document.getElementById(id);
+        let cur = 0;
+        const step = Math.max(1, Math.floor(target / 40));
+        const t = setInterval(() => {
+          cur = Math.min(cur + step, target);
+          el.textContent = cur.toLocaleString();
+          if (cur >= target) clearInterval(t);
+        }, 30);
+      }
+
+      // ── Toast ──
+      function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `toast ${type} show`;
+        setTimeout(() => t.classList.remove('show'), 4000);
+      }
+
+      // 初始化
+      loadRecords();
+      updateStats();
+    </script>
+  </body>
+</html>
