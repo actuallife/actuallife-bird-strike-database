@@ -693,6 +693,7 @@
         }
       }
     </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
   <body>
     <nav>
@@ -1016,12 +1017,14 @@
         <p class="section-desc">
           整合各通報地點的地理資訊，找出鳥窗殺熱點，協助優先推動防治措施。
         </p>
-        <div class="map-placeholder">
-          <span style="font-size: 2.5rem">🗺️</span>
-          <p style="text-align: center">
-            地圖整合中<br /><small>串接 Supabase 地理資料後即自動顯示</small>
-          </p>
-        </div>
+        <div id="leafletMap" style="width:100%;height:480px;border-radius:16px;margin-top:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.1);z-index:1;"></div>
+<div style="margin-top:1rem;display:flex;gap:1.5rem;flex-wrap:wrap;font-size:0.85rem;color:#555;">
+  <span>🔴 撞擊後死亡</span>
+  <span>🟠 撞擊後昏迷</span>
+  <span>🟡 撞擊後受傷飛離</span>
+  <span>🟢 撞擊後恢復飛離</span>
+  <span>⚪ 其他</span>
+</div>
       </div>
     </section>
 
@@ -1036,6 +1039,7 @@
     <div class="toast" id="toast"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
       // ════════════════════════════════
       //  ⚙️ 請填入你的金鑰
@@ -1412,8 +1416,59 @@
       }
 
       // 初始化
-      loadRecords();
+// 初始化
+loadRecords();
       updateStats();
+
+      // ── 地圖 ──
+      async function initLeafletMap() {
+        const mapEl = document.getElementById('leafletMap');
+        if (!mapEl) return;
+
+        const map = L.map('leafletMap').setView([24.7021, 121.7377], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19
+        }).addTo(map);
+
+        const colorMap = {
+          '撞擊後死亡':     '#e74c3c',
+          '撞擊後昏迷':     '#e67e22',
+          '撞擊後受傷飛離': '#f1c40f',
+          '撞擊後恢復飛離': '#2ecc71',
+        };
+
+        const { data, error } = await sb.from('bird_strikes')
+          .select('latitude, longitude, bird_species, strike_type, event_time, location')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null);
+
+        if (error || !data || !data.length) return;
+
+        const bounds = [];
+        data.forEach(r => {
+          const color = colorMap[r.strike_type] || '#95a5a6';
+          const marker = L.circleMarker([r.latitude, r.longitude], {
+            radius: 10, fillColor: color, fillOpacity: 0.85,
+            color: '#ffffff', weight: 2
+          }).addTo(map);
+          marker.bindPopup(`
+            <div style="font-family:'Noto Sans TC',sans-serif;min-width:180px;line-height:1.8">
+              <div style="font-size:1rem;font-weight:700;color:#2c4a6e;margin-bottom:0.4rem">🐦 ${r.bird_species || '未知鳥種'}</div>
+              <div style="font-size:0.82rem;color:#555">
+                <div>📍 ${r.location || '未填寫'}</div>
+                <div>⚠️ ${r.strike_type || '未填寫'}</div>
+                <div>🕐 ${r.event_time ? r.event_time.slice(0,16).replace('T',' ') : '未填寫'}</div>
+              </div>
+            </div>`);
+          bounds.push([r.latitude, r.longitude]);
+        });
+
+        if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
+      }
+
+      initLeafletMap();
     </script>
   </body>
 </html>
